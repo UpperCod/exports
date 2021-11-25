@@ -16,6 +16,18 @@ export const addDotRelative = (file) =>
     file.startsWith("./") ? file : "./" + file;
 
 /**
+ * search for a file name other than index.js
+ * @param {string} output
+ * @returns {string}
+ */
+export const getFileName = (output) => {
+    const parsedPath = path.parse(output);
+    return parsedPath.name === "index"
+        ? path.parse(parsedPath.dir).name
+        : parsedPath.name;
+};
+
+/**
  * @param {object} pkg
  * @param {string[]} outputs
  */
@@ -24,14 +36,7 @@ export function setPkgExports(pkg, outputs, main) {
         .filter((output) => /\.(css|js|mjs)$/.test(output))
         .reduce(
             (exports, output) => {
-                const outputParts = output.split("/");
-                const parsedPath = path.parse(output);
-                const { name } =
-                    outputParts.length > 2
-                        ? { name: outputParts.at(-2) }
-                        : parsedPath.name == "index"
-                        ? { name: main }
-                        : parsedPath;
+                const name = getFileName(output);
                 const relativeOutput = addDotRelative(output);
                 let prop = "./" + name;
                 if (name == main) {
@@ -57,14 +62,7 @@ export function setPkgTypesVersions(pkg, outputs, main) {
     typesVersions["*"] = outputs
         .filter((output) => /\.d\.ts$/.test(output))
         .reduce((all, output) => {
-            const outputParts = output.split("/");
-            const parsedPath = path.parse(output);
-            const { name } =
-                outputParts.length > 2
-                    ? { name: outputParts.at(-2) }
-                    : parsedPath.name == "index"
-                    ? { name: main }
-                    : parsedPath;
+            const name = getFileName(output);
             const id = name.replace(/\.d$/, "");
             if (id == main) {
                 pkg.types = output;
